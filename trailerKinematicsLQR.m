@@ -35,18 +35,18 @@ C = [0 0 0 1
 D = [0;
      0];
 
-sys = ss(A, B, C, D)
+sys = ss(A, B, C, D);
 
 %% Transfer Function
 [num, den] = ss2tf(A, B, C, D);
-G1 = tf(num(1,:), den(1,:))
-G2 = tf(num(2,:), den(1,:))
+G1 = tf(num(1,:), den(1,:));
+G2 = tf(num(2,:), den(1,:));
 
 %% Controllability
-controllability = rank(ctrb(A, B))
+controllability = rank(ctrb(A, B));
 
 %% Observability
-observability = rank(obsv(A, C))
+observability = rank(obsv(A, C));
 
 %% LQR Gains
 G = [0 0 0 0;
@@ -84,62 +84,18 @@ N = M(end-m+1:end, end-l+1:end);
 trailerIC = [3, 6]; %x_t y_t
 tractorIC = [trailerIC(1) + (lt+lh), trailerIC(2)]; 
 ICs = [deg2rad(0); 0; deg2rad(0); trailerIC(1,2)]; % phi_r phi_d_r phi_t y_t
-ur = [0; deg2rad(0)];
+ur = deg2rad(30); %[deg/s]
 sim('LQRTrailerKinematics.slx')
 
-% y_te = OptimalControl(:,1);
-% phi_te = OptimalControl(:,2);
-
-% y_te = SetPointControlFSFB(:,1);
-% phi_te = SetPointControlFSFB(:,2);
-
-y_te = SetPointControlOutputFeedback(:,1);
-phi_te = SetPointControlOutputFeedback(:,2);
+y_te = physics(:,1);
+phi_te = physics(:,2);
 
 %% Plots
 figure
 subplot 211
 plot(tout, y_te)
-hold on
-plot(tout, xform_set(:,1), '--r')
-hold off
 ylabel('y_{t} [m]')
 subplot 212
 plot(tout, rad2deg(phi_te))
-hold on
-plot(tout, xform_set(:,2), '--r')
-hold off
 ylabel('\phi_{t} [{\circ}]')
 xlabel('time [s]')
-
-figure
-hold on
-plot(trailer_xy(:,1), trailer_xy(:,2), 'b')
-plot(tractor_xy(:,1), tractor_xy(:,2), 'g')
-% x_center = 6;
-% y_center = -6;
-% t = 0:.01:2*pi;
-% x_desired = Radius*cos(t) + x_center;
-% y_desired = Radius*sin(t) + y_center;
-% plot(x_desired, y_desired, '--r')
-
-x_desired_line = linspace(trailerIC(1), tractor_xy(end,1), 100);
-y_desired_line = 0*ones(length(x_desired_line));
-plot(x_desired_line, y_desired_line, '--r')
-plot(trailer_xy(1,1), trailer_xy(1,2), 'ob')
-plot(tractor_xy(1,1), tractor_xy(1,2), 'og')
-plot(trailer_xy(end,1), trailer_xy(end,2), 'xb')
-plot(tractor_xy(end,1), tractor_xy(end,2), 'xg')
-axis square
-axis equal
-% ylim([-15 3])
-% xlim([-3 15])
-xlabel('Position in x [m]')
-ylabel('Position in y [m]')
-legend('trailer path', 'tractor path', 'desired path')
-hold off
-
-figure
-plot(tout, y_te)
-hold on
-plot(tout, trailer_xy(:,2))
