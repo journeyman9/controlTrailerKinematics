@@ -10,7 +10,8 @@ lh = 0.53; %[m] hitch wheelbase
 
 %% Change 
 vr = 1; %[m/s] keep below 4.5 m/s
-ur = deg2rad(-0.5); %[deg/s] max 30
+ur = deg2rad(0.1); %[deg/s] max 30
+orientation = 1; % 0 for Horizontal, 1 for Vertical
 
 tractorParams = [lr lt lh vr];
 
@@ -75,8 +76,14 @@ Bbar = B;
 
 %% Simulink
 trailerIC = [3, 6]; %x_t y_t
-tractorIC = [trailerIC(1), trailerIC(2) + (lt+lh)]; 
-ICs = [deg2rad(0); 0; deg2rad(0); trailerIC(1,2)]; % phi_r phi_d_r phi_t y_t
+
+if orientation == 1
+    tractorIC = [trailerIC(1), trailerIC(2) + (lt+lh)];
+    ICs = [deg2rad(90); 0; deg2rad(90); trailerIC(1,2)]; % phi_r phi_d_r phi_t y_t
+else
+    tractorIC = [trailerIC(1) + (lt+lh), trailerIC(2)];
+    ICs = [deg2rad(0); 0; deg2rad(0); trailerIC(1,2)]; % phi_r phi_d_r phi_t y_t
+end
 
 sim('LQRTrailerKinematics.slx')
 
