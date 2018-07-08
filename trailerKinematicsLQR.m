@@ -7,7 +7,7 @@ clear; close all; clc;
 lr = 1.96; %[m] tractor wheelbase
 lt = 4; %[m] trailer wheelbase
 lh = 0.53; %[m] hitch wheelbase
-vr = 1; %[m/s] keep below 4.5 m/s
+vr = 4.5; %[m/s] keep below 4.5 m/s
 
 tractorParams = [lr lt lh vr];
 
@@ -35,24 +35,24 @@ C = [0 0 0 1
 D = [0;
      0];
 
-sys = ss(A, B, C, D)
+sys = ss(A, B, C, D);
 
 %% Transfer Function
 [num, den] = ss2tf(A, B, C, D);
-G1 = tf(num(1,:), den(1,:))
-G2 = tf(num(2,:), den(1,:))
+G1 = tf(num(1,:), den(1,:));
+G2 = tf(num(2,:), den(1,:));
 
 %% Controllability
-controllability = rank(ctrb(A, B))
+controllability = rank(ctrb(A, B));
 
 %% Observability
-observability = rank(obsv(A, C))
+observability = rank(obsv(A, C));
 
 %% LQR Gains
 G = [0 0 0 0;
      0 0 0 0;
-     0 0 4 0;
-     0 0 0 3];
+     0 0 0 1;
+     0 0 1 0];
 H = zeros(4,1);
 rho = 1;
 R = 1;
@@ -81,17 +81,11 @@ F = M(1:n, end-l+1:end);
 N = M(end-m+1:end, end-l+1:end);
 
 %% Simulink
-trailerIC = [3, 6]; %x_t y_t
+trailerIC = [0, 0]; %x_t y_t
 tractorIC = [trailerIC(1) + (lt+lh), trailerIC(2)]; 
 ICs = [deg2rad(0); 0; deg2rad(0); trailerIC(1,2)]; % phi_r phi_d_r phi_t y_t
-ur = [0; deg2rad(0)];
+% ur = 0;
 sim('LQRTrailerKinematics.slx')
-
-% y_te = OptimalControl(:,1);
-% phi_te = OptimalControl(:,2);
-
-% y_te = SetPointControlFSFB(:,1);
-% phi_te = SetPointControlFSFB(:,2);
 
 y_te = SetPointControlOutputFeedback(:,1);
 phi_te = SetPointControlOutputFeedback(:,2);
@@ -101,45 +95,46 @@ figure
 subplot 211
 plot(tout, y_te)
 hold on
-plot(tout, xform_set(:,1), '--r')
+plot(tout, y_d, '--r')
 hold off
 ylabel('y_{t} [m]')
 subplot 212
 plot(tout, rad2deg(phi_te))
 hold on
-plot(tout, xform_set(:,2), '--r')
+plot(tout, psi_d, '--r')
 hold off
 ylabel('\phi_{t} [{\circ}]')
 xlabel('time [s]')
+legend('response', 'desired')
 
-figure
-hold on
-plot(trailer_xy(:,1), trailer_xy(:,2), 'b')
-plot(tractor_xy(:,1), tractor_xy(:,2), 'g')
-% x_center = 6;
-% y_center = -6;
-% t = 0:.01:2*pi;
-% x_desired = Radius*cos(t) + x_center;
-% y_desired = Radius*sin(t) + y_center;
-% plot(x_desired, y_desired, '--r')
-
-x_desired_line = linspace(trailerIC(1), tractor_xy(end,1), 100);
-y_desired_line = 0*ones(length(x_desired_line));
-plot(x_desired_line, y_desired_line, '--r')
-plot(trailer_xy(1,1), trailer_xy(1,2), 'ob')
-plot(tractor_xy(1,1), tractor_xy(1,2), 'og')
-plot(trailer_xy(end,1), trailer_xy(end,2), 'xb')
-plot(tractor_xy(end,1), tractor_xy(end,2), 'xg')
-axis square
-axis equal
-% ylim([-15 3])
-% xlim([-3 15])
-xlabel('Position in x [m]')
-ylabel('Position in y [m]')
-legend('trailer path', 'tractor path', 'desired path')
-hold off
-
-figure
-plot(tout, y_te)
-hold on
-plot(tout, trailer_xy(:,2))
+% figure
+% hold on
+% plot(trailer_xy(:,1), trailer_xy(:,2), 'b')
+% plot(tractor_xy(:,1), tractor_xy(:,2), 'g')
+% % x_center = 6;
+% % y_center = -6;
+% % t = 0:.01:2*pi;
+% % x_desired = Radius*cos(t) + x_center;
+% % y_desired = Radius*sin(t) + y_center;
+% % plot(x_desired, y_desired, '--r')
+% 
+% x_desired_line = linspace(trailerIC(1), tractor_xy(end,1), 100);
+% y_desired_line = 0*ones(length(x_desired_line));
+% plot(x_desired_line, y_desired_line, '--r')
+% plot(trailer_xy(1,1), trailer_xy(1,2), 'ob')
+% plot(tractor_xy(1,1), tractor_xy(1,2), 'og')
+% plot(trailer_xy(end,1), trailer_xy(end,2), 'xb')
+% plot(tractor_xy(end,1), tractor_xy(end,2), 'xg')
+% axis square
+% axis equal
+% % ylim([-15 3])
+% % xlim([-3 15])
+% xlabel('Position in x [m]')
+% ylabel('Position in y [m]')
+% legend('trailer path', 'tractor path', 'desired path')
+% hold off
+% 
+% figure
+% plot(tout, y_te)
+% hold on
+% plot(tout, trailer_xy(:,2))
