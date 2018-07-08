@@ -8,15 +8,16 @@ lr = 1.96; %[m] tractor wheelbase
 lt = 4; %[m] trailer wheelbase
 lh = 0.53; %[m] hitch wheelbase
 vr = 4.5; %[m/s] keep below 4.5 m/s
+orientation = 0; % 0 for Horizontal, 1 for vertical
 
 tractorParams = [lr lt lh vr];
 
 %% At steady state, theta = phi_d_r - phi_d_t = 0, so vt_ss = wr*R
-Radius = 6; %[m] Radius of turn
-sigma = 1; % clock wise = -1, counter-clockwise = 1
-wss = sigma*abs(vr)*sqrt(lt.^2 + Radius.^2 - lh^2)/(lt.^2 + Radius.^2 - lh.^2);
-thss = -2*sigma*sign(vr)*atan((Radius - sqrt(lt.^2 + Radius.^2 + lh.^2))/(lt -lh));
-vt = vr*cos(thss) + lh*wss*sin(thss);
+% Radius = 6; %[m] Radius of turn
+% sigma = 1; % clock wise = -1, counter-clockwise = 1
+% wss = sigma*abs(vr)*sqrt(lt.^2 + Radius.^2 - lh^2)/(lt.^2 + Radius.^2 - lh.^2);
+% thss = -2*sigma*sign(vr)*atan((Radius - sqrt(lt.^2 + Radius.^2 + lh.^2))/(lt -lh));
+% vt = vr*cos(thss) + lh*wss*sin(thss);
 
 %% Linearized State Space
 A = [0          1           0           0;
@@ -82,9 +83,15 @@ N = M(end-m+1:end, end-l+1:end);
 
 %% Simulink
 trailerIC = [0, 0]; %x_t y_t
-tractorIC = [trailerIC(1) + (lt+lh), trailerIC(2)]; 
-ICs = [deg2rad(0); 0; deg2rad(0); trailerIC(1,2)]; % phi_r phi_d_r phi_t y_t
-% ur = 0;
+
+if orientation == 1
+    tractorIC = [trailerIC(1), trailerIC(2) + (lt+lh)];
+    ICs = [deg2rad(90); 0; deg2rad(90); trailerIC(1, 2)]; %phi_r phi_d_r phi_t y_t
+else
+    tractorIC = [trailerIC(1) + (lt+lh), trailerIC(2)]; 
+    ICs = [deg2rad(0); 0; deg2rad(0); trailerIC(1, 2)]; %phi_r phi_d_r phi_t y_t
+end
+
 sim('LQRTrailerKinematics.slx')
 
 y_te = SetPointControlOutputFeedback(:,1);
