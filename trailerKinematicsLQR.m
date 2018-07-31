@@ -82,7 +82,7 @@ F = M(1:n, end-l+1:end);
 N = M(end-m+1:end, end-l+1:end);
 
 %% Simulink
-trailerIC = [0, 0]; %x_t y_t
+trailerIC = [0, 0.5]; %x_t y_t
 
 if orientation == 1
     tractorIC = [trailerIC(1), trailerIC(2) + (lt+lh)];
@@ -94,8 +94,8 @@ end
 
 sim('LQRTrailerKinematics.slx')
 
-y_te = SetPointControlOutputFeedback(:,1);
-phi_te = SetPointControlOutputFeedback(:,2);
+y_te = output(:,1);
+phi_te = output(:,2);
 
 %% Plots
 figure
