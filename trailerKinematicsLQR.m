@@ -10,7 +10,7 @@ lh = 0.53; %[m] hitch wheelbase
 
 %% Change 
 vr = 1; %[m/s] keep below 4.5 m/s
-ur = deg2rad(0.1); %[deg/s] max 30
+ur = deg2rad(-0.1); %[deg/s] max 30 (NOT IN USE RNOW)
 orientation = 1; % 0 for Horizontal, 1 for Vertical
 
 tractorParams = [lr lt lh vr];
