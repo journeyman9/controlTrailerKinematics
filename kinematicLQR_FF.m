@@ -1,7 +1,7 @@
 %% Kinematic LQR + feedforward
 % Journey McDowell (c) 2018
 
-% clear; close all; clc;
+clear; close all; clc;
 
 %% Parameters
 L = 1.524; %[m]
@@ -41,8 +41,9 @@ y_d = [linspace(0, 40, length(track_vector(:, 2)))' track_vector(:, 2)];
 psi_d = [linspace(0, 40, length(track_vector(:, 4)))' track_vector(:, 4)];
 
 %% Simulink
-vehicleIC = [-6, -91];
-ICs = [0, deg2rad(45)];
+vehicleIC = [-7, -91.1];
+y_IC = sqrt((track_vector(1, 2) - vehicleIC(2)).^2 + (track_vector(1,1) - vehicleIC(1)).^2);
+ICs = [y_IC, deg2rad(45)];
 
 sim('LQRFF.slx')
 
