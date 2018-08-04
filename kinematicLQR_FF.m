@@ -5,7 +5,7 @@ clear; close all; clc;
 
 %% Parameters
 L = 1.524; %[m]
-V = 15; %[m/s]
+V = 14; %[m/s]
 
 %% Linearized State Space
 A = [0 V;
@@ -35,10 +35,11 @@ NN = G'*Q*H;
 [K S e] = lqr(sys, QQ, RR, NN);
 
 %% Feedforward
+sim_time = 40;
 track_vector = csvread('ff.txt');
-curv = [linspace(0, 40, length(track_vector(:, 3)))' track_vector(:, 3)];
-y_d = [linspace(0, 40, length(track_vector(:, 2)))' track_vector(:, 2)];
-psi_d = [linspace(0, 40, length(track_vector(:, 4)))' track_vector(:, 4)];
+curv = [linspace(0, sim_time, length(track_vector(:, 3)))' track_vector(:, 3)];
+y_d = [linspace(0, sim_time, length(track_vector(:, 2)))' track_vector(:, 2)];
+psi_d = [linspace(0, sim_time, length(track_vector(:, 4)))' track_vector(:, 4)];
 
 %% Simulink
 vehicleIC = [-6, -91];
