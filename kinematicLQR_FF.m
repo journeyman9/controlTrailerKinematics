@@ -23,10 +23,16 @@ sys = ss(A, B, C, D);
 %% LQR gains
 G = eye(2);
 H = D;
-p = 1;
-R = 1;
 Q = [1 0;
      0 1];
+
+% Only control y, psi doens't work
+% G = [1 0];
+% H = 0;
+% Q = 1;
+
+p = 1;
+R = 1;
 
 QQ = G'*Q*G;
 RR = H'*Q*H + p*R;
