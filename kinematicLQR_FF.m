@@ -20,6 +20,9 @@ D = zeros(2, 1);
 
 sys = ss(A, B, C, D);
 
+%% Check controllability
+controllability  = rank(ctrb(A, B));
+
 %% LQR gains
 G = eye(2);
 H = D;
