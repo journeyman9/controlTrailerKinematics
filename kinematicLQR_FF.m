@@ -34,24 +34,35 @@ NN = G'*Q*H;
 
 [K S e] = lqr(sys, QQ, RR, NN);
 
-%% Feedforward
-track_vector = csvread('ff.txt');
-s = track_vector(:, 5);
-curv = [s/V track_vector(:, 3)];
-y_d = [s/V track_vector(:, 2)];
-psi_d = [s/V track_vector(:, 4)];
+%% Set Point Control
+Q_sp = [A, B; G, H];
+[n, n] = size(A);
+[l, p] = size(G); % number of controlled outputs
+m = 1; % number of process inputs, or just inputs
+M = pinv(Q_sp); % psuedo inverse if matrix not square
+F = M(1:n, end-l+1:end);
+N = M(end-m+1:end, end-l+1:end);
 
-sim_time = y_d(end, 1);
+%% Feedforward
+track_vector = csvread('t_fortyfive.txt');
+s = track_vector(:, 5);
+t = s/V;
+curv = [t track_vector(:, 3)];
+psi_d = [t track_vector(:, 4)];
+% y_d = [t track_vector(:, 2)];
+y_d = [t zeros(length(psi_d), 1)];
+
+sim_time = t(end, 1);
 
 %% Simulink
 vehicleIC = [-6, -91];
 y_IC = sqrt((track_vector(1, 2) - vehicleIC(2)).^2 + (track_vector(1,1) - vehicleIC(1)).^2);
-ICs = [0.1, deg2rad(5)];
+ICs = [0, deg2rad(45)];
 
 sim('LQRFF.slx')
 
 y_e = deviation(:, 1);
-phi_e = deviation(:, 2);
+psi_e = deviation(:, 2);
 
 %% Plots
 
@@ -63,17 +74,17 @@ plot(tout, 0*linspace(0, 1, length(y_e)))
 ylabel('y_{e} [m]')
 hold off
 subplot 212
-plot(tout, rad2deg(phi_e))
+plot(tout, rad2deg(psi_e))
 hold on
-plot(tout, 0*linspace(0, 1, length(phi_e)))
+plot(tout, 0*linspace(0, 1, length(psi_e)))
 hold off
 xlabel('time[s]')
-ylabel('\phi_{e} [{\circ}]')
+ylabel('\psi [{\circ}]')
 legend('response', 'desired')
 movegui('west')
 
 figure
-scatter(track_vector(:, 1), track_vector(:, 2), '.', 'r')
+plot(track_vector(:, 1), track_vector(:, 2), '--r')
 hold on
 plot(odometry(:, 1), odometry(:, 2), 'b')
 plot(odometry(1, 1), odometry(1, 2), 'ob')
