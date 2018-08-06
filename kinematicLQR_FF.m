@@ -26,16 +26,10 @@ controllability  = rank(ctrb(A, B));
 %% LQR gains
 G = eye(2);
 H = D;
-Q = [1 0;
-     0 1];
-
-% Only control y, psi doens't work
-% G = [1 0];
-% H = 0;
-% Q = 1;
-
+Q = [1/(0.1^2) 0;
+     0 1/(1.^2)];
 p = 1;
-R = 1;
+R = 1/(deg2rad(30).^2);
 
 QQ = G'*Q*G;
 RR = H'*Q*H + p*R;
@@ -53,7 +47,7 @@ F = M(1:n, end-l+1:end);
 N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_fortyfive.txt');
+track_vector = csvread('t_lanechange.txt');
 s = track_vector(:, 5);
 t = s/V;
 curv = [t track_vector(:, 3)];
@@ -64,9 +58,9 @@ y_d = [t zeros(length(psi_d), 1)];
 sim_time = t(end, 1);
 
 %% Simulink
-vehicleIC = [-6, -91];
-y_IC = sqrt((track_vector(1, 2) - vehicleIC(2)).^2 + (track_vector(1,1) - vehicleIC(1)).^2);
-ICs = [0, deg2rad(45)];
+y_IC = 1;
+ICs = [y_IC deg2rad(0)];
+vehicleIC = [track_vector(1,1)-y_IC*sin(ICs(2)) track_vector(1,2)+y_IC*cos(ICs(2))];
 
 sim('LQRFF.slx')
 
@@ -79,13 +73,13 @@ figure
 subplot 211
 plot(tout, y_e)
 hold on
-plot(tout, 0*linspace(0, 1, length(y_e)))
+plot(tout, des(:, 1), '--r')
 ylabel('y_{e} [m]')
 hold off
 subplot 212
 plot(tout, rad2deg(psi_e))
 hold on
-plot(tout, 0*linspace(0, 1, length(psi_e)))
+plot(tout, rad2deg(des(:, 2)), '--r')
 hold off
 xlabel('time[s]')
 ylabel('\psi [{\circ}]')
