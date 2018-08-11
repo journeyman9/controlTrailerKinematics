@@ -8,40 +8,11 @@ lr = 1.96; %[m] tractor wheelbase
 lt = 4; %[m] trailer wheelbase
 lh = 0.53; %[m] hitch wheelbase
 vr = 4.5; %[m/s] keep below 4.5 m/s
-orientation = 1; % 0 for Horizontal, 1 for vertical
+orientation = 'right'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
 
 tractorParams = [lr lt lh vr];
 
-%% At steady state, theta = phi_d_r - phi_d_t = 0, so vt_ss = wr*R
-% Radius = 6; %[m] Radius of turn
-% sigma = 1; % clock wise = -1, counter-clockwise = 1
-% wss = sigma*abs(vr)*sqrt(lt.^2 + Radius.^2 - lh^2)/(lt.^2 + Radius.^2 - lh.^2);
-% thss = -2*sigma*sign(vr)*atan((Radius - sqrt(lt.^2 + Radius.^2 + lh.^2))/(lt -lh));
-% vt = vr*cos(thss) + lh*wss*sin(thss);
-
 %% Linearized State Space
-%Steering rate
-% A = [0          1           0           0;
-%      0          0           0           0;
-%      vr./lt     -lh./lt     -vr./lt     0;
-%      0          0           vr          0];
-%  
-% B = [0;
-%      vr./lr;
-%      0;
-%      0];
- 
-% C = [0 0 0 1
-%      0 0 1 0];
-%  
-% D = [0;
-%      0];
-
-% full state
-% C = eye(4);
-% D = zeros(4, 1);
-
-% steering angle
 A = [0       0         0;
      vr./lt  -vr./lt   0;
      0       vr        0];
@@ -67,20 +38,6 @@ controllability = rank(ctrb(A, B));
 observability = rank(obsv(A, C));
 
 %% LQR Gains
-% %steering rate
-% G = [0 0 0 0;
-%      0 0 0 0;
-%      0 0 0 1;
-%      0 0 1 0];
-% H = zeros(4,1);
-% rho = 1;
-% R = 1;
-% Q = [0 0 0 0;
-%      0 0 0 0;
-%      0 0 4 0;
-%      0 0 0 3];
-
-%steering angle
 G = eye(3);
 H = zeros(3, 1);
 rho = 1;
@@ -108,11 +65,12 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_circle.txt');
+track_vector = csvread('t_fortyfive.txt');
 s = track_vector(:, 5);
 t = abs(s / vr);
 curv = [t track_vector(:, 3)];
-yaw_r = [t track_vector(:, 4)];
+yaw_trailer = [t track_vector(:, 4)];
+yaw_tractor = yaw_trailer;
 y_r = [t track_vector(:, 2)];
 x_r = [t track_vector(:, 1)];
 
@@ -121,21 +79,23 @@ sim_time = t(end, 1);
 %% Simulink
 y_IC = 1;
 
-if orientation == 1
-    trailerIC = [track_vector(1,1)-y_IC*sin(90), track_vector(1, 2)+y_IC*cos(90)]; %x_t y_t
-    % steering rate
-%     tractorIC = [trailerIC(1), trailerIC(2) + (lt+lh)];
-%     ICs = [deg2rad(90); 0; deg2rad(90); y_IC]; %phi_r phi_d_r phi_t y_t
-    % steering angle
-    tractorIC = [trailerIC(1), trailerIC(2) + (lt+lh)];
-    ICs = [deg2rad(90); deg2rad(90); y_IC]; %phi_r phi_t y_t
-else
-    % steering angle
-    trailerIC = [track_vector(1,1)-y_IC*sin(0), track_vector(1, 2)+y_IC*cos(0)]; %x_t y_t
-%     tractorIC = [trailerIC(1) + (lt+lh), trailerIC(2)]; 
-%     ICs = [deg2rad(0); 0; deg2rad(0); y_IC]; %phi_r phi_d_r phi_t y_t
-    tractorIC = [trailerIC(1) + (lt+lh), trailerIC(2)]; 
-    ICs = [deg2rad(0); deg2rad(0); y_IC]; %phi_r phi_t y_t
+switch orientation
+    case 'right'
+        trailerIC = [track_vector(1,1)-y_IC*sin(0), track_vector(1, 2)+y_IC*cos(0)]; %x_t y_t
+        tractorIC = [trailerIC(1) + (lt+lh), trailerIC(2)]; 
+        ICs = [deg2rad(0); deg2rad(0); y_IC]; %phi_r phi_t y_t
+    case 'up'
+        trailerIC = [track_vector(1,1)-y_IC*sin(pi/2), track_vector(1, 2)+y_IC*cos(pi/2)]; %x_t y_t
+        tractorIC = [trailerIC(1), trailerIC(2) + (lt+lh)];
+        ICs = [deg2rad(90); deg2rad(90); y_IC]; %phi_r phi_t y_t
+    case 'left'
+        trailerIC = [track_vector(1,1)-y_IC*sin(pi), track_vector(1, 2)+y_IC*cos(pi)]; %x_t y_t
+        tractorIC = [trailerIC(1) - (lt+lh), trailerIC(2)]; 
+        ICs = [deg2rad(180); deg2rad(180); y_IC]; %phi_r phi_t y_t
+    case 'down'
+        trailerIC = [track_vector(1,1)-y_IC*sin(pi/2), track_vector(1, 2)+y_IC*cos(pi/2)]; %x_t y_t
+        tractorIC = [trailerIC(1), trailerIC(2) - (lt+lh)];
+        ICs = [deg2rad(270); deg2rad(270); y_IC]; %phi_r phi_t y_t
 end
 
 sim('LQRTrailerKinematics.slx')
@@ -145,33 +105,36 @@ phi_te = error(:,2);
 
 %% Plots
 figure
-subplot 211
+ax1 = subplot(2, 1, 1);
 plot(tout, y_te)
 hold on
 plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
 hold off
 ylabel('y_{te} [m]')
-subplot 212
+ax2 = subplot(2, 1, 2);
 plot(tout, rad2deg(phi_te))
 hold on
 plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
 hold off
-ylabel('\phi_{t} [{\circ}]')
+ylabel('\psi_{te} [{\circ}]')
 xlabel('time [s]')
 legend('response', 'desired')
+movegui('west')
+linkaxes([ax1 ax2], 'x')
 
-% figure
-% hold on
-% plot(odometry(:, 5), odometry(:, 4), 'b') % trailer
-% plot(odometry(:, 7), odometry(:, 6), 'g') % tractor
-% 
-% plot(odometry(1, 5), odometry(1, 4), 'ob')
-% plot(odometry(1, 7), odometry(1, 6), 'og')
-% plot(odometry(end, 5), odometry(end, 4), 'xb')
-% plot(odometry(end, 7), odometry(end, 6), 'xg')
-% axis square
-% axis equal
-% xlabel('Position in x [m]')
-% ylabel('Position in y [m]')
-% legend('trailer path', 'tractor path', 'desired path')
-% hold off
+figure
+hold on
+plot(track_vector(:, 1), track_vector(:, 2), '--r')
+plot(odometry(:, 5), odometry(:, 4), 'b') % trailer
+plot(odometry(:, 7), odometry(:, 6), 'g') % tractor
+
+plot(odometry(1, 5), odometry(1, 4), 'ob')
+plot(odometry(1, 7), odometry(1, 6), 'og')
+plot(odometry(end, 5), odometry(end, 4), 'xb')
+plot(odometry(end, 7), odometry(end, 6), 'xg')
+axis square
+axis equal
+xlabel('Position in x [m]')
+ylabel('Position in y [m]')
+legend('desired path', 'trailer path', 'tractor path')
+hold off
