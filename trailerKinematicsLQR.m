@@ -8,7 +8,7 @@ lr = 1.96; %[m] tractor wheelbase
 lt = 4; %[m] trailer wheelbase
 lh = 0.53; %[m] hitch wheelbase
 vr = 4.5; %[m/s] keep below 4.5 m/s
-orientation = 'right'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
+orientation = 'up'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
 
 tractorParams = [lr lt lh vr];
 
@@ -65,7 +65,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_fortyfive.txt');
+track_vector = csvread('t_circle.txt');
 s = track_vector(:, 5);
 t = abs(s / vr);
 curv = [t track_vector(:, 3)];
