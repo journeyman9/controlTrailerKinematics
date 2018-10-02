@@ -93,7 +93,7 @@ switch orientation
         tractorIC = [trailerIC(1) - (lt+lh), trailerIC(2)]; 
         ICs = [deg2rad(180); deg2rad(180); y_IC]; %phi_r phi_t y_t
     case 'down'
-        trailerIC = [track_vector(1,1)-y_IC*sin(pi/2), track_vector(1, 2)+y_IC*cos(pi/2)]; %x_t y_t
+        trailerIC = [track_vector(1,1)-y_IC*sin(3*pi/2), track_vector(1, 2)+y_IC*cos(3*pi/2)]; %x_t y_t
         tractorIC = [trailerIC(1), trailerIC(2) - (lt+lh)];
         ICs = [deg2rad(270); deg2rad(270); y_IC]; %phi_r phi_t y_t
 end
