@@ -8,7 +8,7 @@ lr = 1.96; %[m] tractor wheelbase
 lt = 4; %[m] trailer wheelbase
 lh = 0.53; %[m] hitch wheelbase
 vr = 4.5; %[m/s] keep below 4.5 m/s
-orientation = 'up'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
+orientation = 'right'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
 
 tractorParams = [lr lt lh vr];
 
@@ -30,6 +30,7 @@ sys = ss(A, B, C, D);
 [num, den] = ss2tf(A, B, C, D);
 G1 = tf(num(1,:), den(1,:));
 G2 = tf(num(2,:), den(1,:));
+G3 = tf(num(3,:), den(1,:));
 
 %% Controllability
 controllability = rank(ctrb(A, B));
@@ -65,7 +66,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_circle.txt');
+track_vector = csvread('t_lanechange.txt');
 s = track_vector(:, 5);
 t = abs(s / vr);
 curv = [t track_vector(:, 3)];
@@ -77,7 +78,7 @@ x_r = [t track_vector(:, 1)];
 sim_time = t(end, 1);
 
 %% Simulink
-y_IC = 1;
+y_IC = 0;
 
 switch orientation
     case 'right'
@@ -100,27 +101,36 @@ end
 
 sim('LQRTrailerKinematics.slx')
 
-y_te = error(:,1);
-phi_te = error(:,2);
+% x = [yaw_tractor, yaw_trailer, y_r]
+psi_tractor_e = error(:, 1);
+psi_te = error(:, 2);
+y_te = error(:, 3);
 
 %% Plots
 figure
-ax1 = subplot(2, 1, 1);
+ax1 = subplot(3, 1, 1);
+plot(tout, rad2deg(psi_tractor_e))
+hold on
+plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
+hold off
+ylabel('\psi_{tractor} [{\circ}]')
+ax2 = subplot(3, 1, 2);
+plot(tout, rad2deg(psi_te))
+hold on
+plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
+hold off
+ylabel('\psi_{te} [{\circ}]')
+ax3 = subplot(3, 1, 3);
 plot(tout, y_te)
 hold on
 plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
 hold off
 ylabel('y_{te} [m]')
-ax2 = subplot(2, 1, 2);
-plot(tout, rad2deg(phi_te))
-hold on
-plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
-hold off
-ylabel('\psi_{te} [{\circ}]')
+
 xlabel('time [s]')
 legend('response', 'desired')
 movegui('west')
-linkaxes([ax1 ax2], 'x')
+linkaxes([ax1 ax2, ax3], 'x')
 
 figure
 hold on
