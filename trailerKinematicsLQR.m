@@ -4,11 +4,11 @@
 clear; close all; clc;
 
 %% Parameters
-lr = 1.96; %[m] tractor wheelbase
-lt = 4; %[m] trailer wheelbase
-lh = 0.53; %[m] hitch wheelbase
-vr = 4.5; %[m/s] keep below 4.5 m/s
-orientation = 'right'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
+lr = 5.7336; %[m] tractor wheelbase
+lt = 12.192; %[m] trailer wheelbase
+lh = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
+vr = -4.5; %[m/s] keep below 4.5 m/s
+orientation = 'up'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
 
 tractorParams = [lr lt lh vr];
 
@@ -67,11 +67,15 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_oval.txt');
+track_vector = csvread('t_cw_circle.txt');
 s = track_vector(:, 5);
 t = abs(s / vr);
 curv = [t track_vector(:, 3)];
-yaw_trailer = [t track_vector(:, 4)];
+if vr < 0
+    yaw_trailer = [t track_vector(:, 4)-pi];
+else
+    yaw_trailer = [t track_vector(:, 4)];
+end
 yaw_tractor = yaw_trailer;
 y_r = [t track_vector(:, 2)];
 x_r = [t track_vector(:, 1)];
@@ -154,11 +158,11 @@ hold off
 
 %% Animation
 W_c = lr;
-H_c = lt / 2;
+H_c = lt / 3;
 W_t = lt;
-H_t = lt / 2;
+H_t = lt / 3;
 
-time = 0:.01:length(tout);
+time = 0:.01:sim_time;
 tractor_x = interp1(tout, odometry(:, 7), time);
 tractor_y = interp1(tout, odometry(:, 6), time);
 trailer_x = interp1(tout, odometry(:, 5), time);
@@ -189,8 +193,8 @@ for i = 1:length(time)
     ang0 = psi_trailer(i);
     ang1 = psi_tractor(i);
     
-    % tractor
-    x_trac = [tractor_x(i)+W_c/2 tractor_x(i)-W_c/2 tractor_x(i)-W_c/2 tractor_x(i)+W_c/2 tractor_x(i)+W_c/2];
+    % tractor ccw pts starting with top right -- rear axle
+    x_trac = [tractor_x(i)+W_c tractor_x(i) tractor_x(i) tractor_x(i)+W_c tractor_x(i)+W_c]; 
     y_trac = [tractor_y(i)+H_c/2 tractor_y(i)+H_c/2 tractor_y(i)-H_c/2 tractor_y(i)-H_c/2 tractor_y(i)+H_c/2];
     corners_trac = zeros(5, 3);
     for j = 1:length(x_trac)
@@ -198,8 +202,8 @@ for i = 1:length(time)
     end
     plot(corners_trac(:, 1), corners_trac(:, 2), 'g-', 'LineWidth', 2)
     
-    % trailer
-    x_trail = [trailer_x(i)+W_t/2 trailer_x(i)-W_t/2 trailer_x(i)-W_t/2 trailer_x(i)+W_t/2 trailer_x(i)+W_t/2];
+    % trailer ccw pts starting with top right -- rear axle
+    x_trail = [trailer_x(i)+W_t trailer_x(i) trailer_x(i) trailer_x(i)+W_t trailer_x(i)+W_t]; 
     y_trail = [trailer_y(i)+H_t/2 trailer_y(i)+H_t/2 trailer_y(i)-H_t/2 trailer_y(i)-H_t/2 trailer_y(i)+H_t/2];
     corners_trail = zeros(5, 3);
     for j = 1:length(x_trail)
