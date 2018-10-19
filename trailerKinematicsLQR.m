@@ -7,8 +7,8 @@ clear; close all; clc;
 lr = 5.7336; %[m] tractor wheelbase
 lt = 12.192; %[m] trailer wheelbase
 lh = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
-vr = -4.5; %[m/s] keep below 4.5 m/s
-orientation = 'up'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
+vr = 4.5; %[m/s] keep below 4.5 m/s
+orientation = 'right'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
 
 tractorParams = [lr lt lh vr];
 
@@ -67,7 +67,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_cw_circle.txt');
+track_vector = csvread('t_lanechange.txt');
 s = track_vector(:, 5);
 t = abs(s / vr);
 curv = [t track_vector(:, 3)];
@@ -83,7 +83,7 @@ x_r = [t track_vector(:, 1)];
 sim_time = t(end, 1);
 
 %% Simulink
-y_IC = 0;
+y_IC = -4;
 
 switch orientation
     case 'right'
@@ -211,8 +211,8 @@ for i = 1:length(time)
     end
     plot(corners_trail(:, 1), corners_trail(:, 2), 'b-', 'LineWidth', 2)
 
-    xlim([trailer_x(i)-20 trailer_x(i)+20])
-    ylim([ trailer_y(i)-20 trailer_y(i)+20])
+    xlim([trailer_x(i)-25 trailer_x(i)+25])
+    ylim([ trailer_y(i)-25 trailer_y(i)+25])
     xlabel('Position in x [m]')
     ylabel('Position in y [m]')
     drawnow
