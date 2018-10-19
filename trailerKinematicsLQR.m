@@ -24,6 +24,7 @@ B = [vr./lt;
 C = eye(3);
 D = zeros(3, 1);
 
+% x = [yaw_tractor, yaw_trailer, y_r]
 sys = ss(A, B, C, D);
 
 %% Transfer Function
@@ -66,7 +67,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_lanechange.txt');
+track_vector = csvread('t_oval.txt');
 s = track_vector(:, 5);
 t = abs(s / vr);
 curv = [t track_vector(:, 3)];
@@ -107,6 +108,7 @@ psi_te = error(:, 2);
 y_te = error(:, 3);
 
 %% Plots
+
 figure
 ax1 = subplot(3, 1, 1);
 plot(tout, rad2deg(psi_tractor_e))
@@ -147,4 +149,69 @@ axis equal
 xlabel('Position in x [m]')
 ylabel('Position in y [m]')
 legend('desired path', 'trailer path', 'tractor path')
+movegui('east')
 hold off
+
+%% Animation
+W_c = lr;
+H_c = lt / 2;
+W_t = lt;
+H_t = lt / 2;
+
+time = 0:.01:length(tout);
+tractor_x = interp1(tout, odometry(:, 7), time);
+tractor_y = interp1(tout, odometry(:, 6), time);
+trailer_x = interp1(tout, odometry(:, 5), time);
+trailer_y = interp1(tout, odometry(:, 4), time);
+psi_tractor = interp1(tout, odometry(:, 1), time);
+psi_trailer = interp1(tout, odometry(:, 3), time);
+
+% tractor_x = odometry(:, 7);
+% tractor_y = odometry(:, 6);
+% trailer_x = odometry(:, 5);
+% trailer_y = odometry(:, 4);
+% psi_tractor = odometry(:, 1);
+% psi_trailer = odometry(:, 3);
+
+DCM = @(ang) [cos(ang) -sin(ang) 0;
+              sin(ang)  cos(ang) 0;
+                0         0      1];
+
+% homogenous transformation
+center = @(x, y) [1 0 x;
+                  0 1 y;
+                  0 0 1];
+figure
+for i = 1:length(time)
+    plot(track_vector(:, 1), track_vector(:, 2), '--r')
+    hold on
+    
+    ang0 = psi_trailer(i);
+    ang1 = psi_tractor(i);
+    
+    % tractor
+    x_trac = [tractor_x(i)+W_c/2 tractor_x(i)-W_c/2 tractor_x(i)-W_c/2 tractor_x(i)+W_c/2 tractor_x(i)+W_c/2];
+    y_trac = [tractor_y(i)+H_c/2 tractor_y(i)+H_c/2 tractor_y(i)-H_c/2 tractor_y(i)-H_c/2 tractor_y(i)+H_c/2];
+    corners_trac = zeros(5, 3);
+    for j = 1:length(x_trac)
+        corners_trac(j, 1:3) = center(tractor_x(i), tractor_y(i)) * DCM(ang1) * center(-tractor_x(i), -tractor_y(i)) * [x_trac(j); y_trac(j); 1];
+    end
+    plot(corners_trac(:, 1), corners_trac(:, 2), 'g-', 'LineWidth', 2)
+    
+    % trailer
+    x_trail = [trailer_x(i)+W_t/2 trailer_x(i)-W_t/2 trailer_x(i)-W_t/2 trailer_x(i)+W_t/2 trailer_x(i)+W_t/2];
+    y_trail = [trailer_y(i)+H_t/2 trailer_y(i)+H_t/2 trailer_y(i)-H_t/2 trailer_y(i)-H_t/2 trailer_y(i)+H_t/2];
+    corners_trail = zeros(5, 3);
+    for j = 1:length(x_trail)
+        corners_trail(j, 1:3) = center(trailer_x(i), trailer_y(i)) * DCM(ang0) * center(-trailer_x(i), -trailer_y(i)) * [x_trail(j); y_trail(j); 1];
+    end
+    plot(corners_trail(:, 1), corners_trail(:, 2), 'b-', 'LineWidth', 2)
+
+    xlim([trailer_x(i)-20 trailer_x(i)+20])
+    ylim([ trailer_y(i)-20 trailer_y(i)+20])
+    xlabel('Position in x [m]')
+    ylabel('Position in y [m]')
+    drawnow
+    hold off
+end
+
