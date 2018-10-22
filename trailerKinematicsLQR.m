@@ -8,7 +8,7 @@ lr = 5.7336; %[m] tractor wheelbase
 lt = 12.192; %[m] trailer wheelbase
 lh = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
 vr = -4.5; %[m/s] keep below 4.5 m/s
-orientation = 'up'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
+orientation = 'right'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
 
 tractorParams = [lr lt lh vr];
 
@@ -67,7 +67,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_cw_circle.txt');
+track_vector = csvread('t_backward_straight.txt');
 s = track_vector(:, 5);
 t = abs(s / vr);
 curv = [t track_vector(:, 3)];
@@ -83,7 +83,7 @@ x_r = [t track_vector(:, 1)];
 sim_time = t(end, 1);
 
 %% Simulink
-y_IC = -4;
+y_IC = 4;
 
 switch orientation
     case 'right'
@@ -207,15 +207,6 @@ for i = 1:length(time)
     ang0 = psi_trailer(i);
     ang1 = psi_tractor(i);
     
-    % tractor ccw pts starting with top right -- rear axle
-    x_trac = [tractor_x(i)+W_c tractor_x(i) tractor_x(i) tractor_x(i)+W_c tractor_x(i)+W_c]; 
-    y_trac = [tractor_y(i)+H_c/2 tractor_y(i)+H_c/2 tractor_y(i)-H_c/2 tractor_y(i)-H_c/2 tractor_y(i)+H_c/2];
-    corners_trac = zeros(5, 3);
-    for j = 1:length(x_trac)
-        corners_trac(j, 1:3) = center(tractor_x(i), tractor_y(i)) * DCM(ang1) * center(-tractor_x(i), -tractor_y(i)) * [x_trac(j); y_trac(j); 1];
-    end
-    plot(corners_trac(:, 1), corners_trac(:, 2), 'g-', 'LineWidth', 2)
-    
     % trailer ccw pts starting with top right -- rear axle
     x_trail = [trailer_x(i)+W_t trailer_x(i) trailer_x(i) trailer_x(i)+W_t trailer_x(i)+W_t]; 
     y_trail = [trailer_y(i)+H_t/2 trailer_y(i)+H_t/2 trailer_y(i)-H_t/2 trailer_y(i)-H_t/2 trailer_y(i)+H_t/2];
@@ -224,6 +215,15 @@ for i = 1:length(time)
         corners_trail(j, 1:3) = center(trailer_x(i), trailer_y(i)) * DCM(ang0) * center(-trailer_x(i), -trailer_y(i)) * [x_trail(j); y_trail(j); 1];
     end
     plot(corners_trail(:, 1), corners_trail(:, 2), 'b-', 'LineWidth', 2)
+    
+    % tractor ccw pts starting with top right -- rear axle
+    x_trac = [tractor_x(i)+W_c tractor_x(i) tractor_x(i) tractor_x(i)+W_c tractor_x(i)+W_c]; 
+    y_trac = [tractor_y(i)+H_c/2 tractor_y(i)+H_c/2 tractor_y(i)-H_c/2 tractor_y(i)-H_c/2 tractor_y(i)+H_c/2];
+    corners_trac = zeros(5, 3);
+    for j = 1:length(x_trac)
+        corners_trac(j, 1:3) = center(tractor_x(i), tractor_y(i)) * DCM(ang1) * center(-tractor_x(i), -tractor_y(i)) * [x_trac(j); y_trac(j); 1];
+    end
+    plot(corners_trac(:, 1), corners_trac(:, 2), 'g-', 'LineWidth', 2)
 
     xlim([trailer_x(i)-25 trailer_x(i)+25])
     ylim([ trailer_y(i)-25 trailer_y(i)+25])
