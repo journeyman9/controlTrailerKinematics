@@ -224,6 +224,17 @@ for i = 1:length(time)
         corners_trac(j, 1:3) = center(tractor_x(i), tractor_y(i)) * DCM(ang1) * center(-tractor_x(i), -tractor_y(i)) * [x_trac(j); y_trac(j); 1];
     end
     plot(corners_trac(:, 1), corners_trac(:, 2), 'g-', 'LineWidth', 2)
+    
+    % rear axle
+    plot(trailer_x(i), trailer_y(i), 'b+')
+    plot(tractor_x(i), tractor_y(i), 'g+')
+    
+    % hitch point (should be the same for both)
+    hitch_trail = center(trailer_x(i), trailer_y(i)) * DCM(ang0) * center(-trailer_x(i), -trailer_y(i)) * [trailer_x(i)+lt; trailer_y(i); 1];
+    plot(hitch_trail(1), hitch_trail(2), 'b*')
+    
+    hitch_trac = center(tractor_x(i), tractor_y(i)) * DCM(ang1) * center(-tractor_x(i), -tractor_y(i)) * [tractor_x(i)-lh; tractor_y(i); 1];
+    plot(hitch_trac(1), hitch_trac(2), 'g*')
 
     xlim([trailer_x(i)-25 trailer_x(i)+25])
     ylim([ trailer_y(i)-25 trailer_y(i)+25])
