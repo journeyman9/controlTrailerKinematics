@@ -7,8 +7,7 @@ clear; close all; clc;
 L1 = 5.7336; %[m] tractor wheelbase
 L2 = 12.192; %[m] trailer wheelbase
 h = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
-vc = 4.5; %[m/s] keep below 4.5 m/s
-% orientation = 'right'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
+vc = -4.5; %[m/s] keep below 4.5 m/s
 
 %% Linearized State Space
 A = [0       0         0;
@@ -71,7 +70,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_lanechange.txt');
+track_vector = csvread('t_backward_straight.txt');
 s = track_vector(:, 5);
 t = abs(s / vc);
 curv = [t track_vector(:, 3)];
@@ -87,49 +86,33 @@ x_r = [t track_vector(:, 1)];
 sim_time = t(end, 1);
 
 %% Simulink
-y_IC = 0;
-psi_1_IC = deg2rad(345);
-psi_2_IC = deg2rad(0);
+y_IC = 10;
+psi_2_IC = deg2rad(45);
+hitch_IC = deg2rad(10);
+
+psi_1_IC = hitch_IC + psi_2_IC;
 
 trailerIC = [track_vector(1, 1)-y_IC*sin(psi_2_IC), track_vector(1, 2)+y_IC*cos(psi_2_IC)]; %x2, y2
 tractorIC = [trailerIC(1)+L2*cos(psi_2_IC)+h*cos(psi_1_IC), trailerIC(2)+L2*sin(psi_2_IC)+h*sin(psi_1_IC)]; %x1, y1
 ICs = [psi_1_IC; psi_2_IC; y_IC];
 
-% switch orientation
-%     case 'right'
-%         trailerIC = [track_vector(1,1)-y_IC*sin(0), track_vector(1, 2)+y_IC*cos(0)]; %x_t y_t
-%         tractorIC = [trailerIC(1) + (L2+h), trailerIC(2)]; 
-%         ICs = [deg2rad(0); deg2rad(0); y_IC]; %phi_r phi_t y_t
-%     case 'up'
-%         trailerIC = [track_vector(1,1)-y_IC*sin(pi/2), track_vector(1, 2)+y_IC*cos(pi/2)]; %x_t y_t
-%         tractorIC = [trailerIC(1), trailerIC(2) + (L2+h)];
-%         ICs = [deg2rad(90); deg2rad(90); y_IC]; %phi_r phi_t y_t
-%     case 'left'
-%         trailerIC = [track_vector(1,1)-y_IC*sin(pi), track_vector(1, 2)+y_IC*cos(pi)]; %x_t y_t
-%         tractorIC = [trailerIC(1) - (L2+h), trailerIC(2)]; 
-%         ICs = [deg2rad(180); deg2rad(180); y_IC]; %phi_r phi_t y_t
-%     case 'down'
-%         trailerIC = [track_vector(1,1)-y_IC*sin(3*pi/2), track_vector(1, 2)+y_IC*cos(3*pi/2)]; %x_t y_t
-%         tractorIC = [trailerIC(1), trailerIC(2) - (L2+h)];
-%         ICs = [deg2rad(270); deg2rad(270); y_IC]; %phi_r phi_t y_t
-% end
-
 sim('LQRTrailerKinematics.slx')
 
 % x = [yaw_tractor, yaw_trailer, y_r]
-% psi_tractor_e = error(:, 1);
-% psi_te = error(:, 2);
-% y_te = error(:, 3);
+psi_tractor_e = error(:, 1);
+psi_te = error(:, 2);
+y_te = error(:, 3);
 
 %% Jack-knife check 
 hitch_angle = odometry(:, 8);
 hitch_max = 90; %[degrees]
+
 for terminal_index = 1:length(hitch_angle)
-    if hitch_angle(terminal_index) > deg2rad(hitch_max) && abs(hitch_angle(terminal_index)-2*pi) > deg2rad(hitch_max)
-        fprintf('Jackknifed! 1 \n')
+    if hitch_angle(terminal_index) > deg2rad(hitch_max)
+        fprintf('Jackknifed! theta = %4.2f \n', rad2deg(hitch_angle(terminal_index)))
         break
-    elseif hitch_angle(terminal_index) < deg2rad(-hitch_max) && abs(hitch_angle(terminal_index)-2*pi) > deg2rad(-hitch_max)
-        fprintf('Jackknifed! 2\n')
+    elseif hitch_angle(terminal_index) < deg2rad(-hitch_max)
+        fprintf('Jackknifed! theta = %4.2f \n', rad2deg(hitch_angle(terminal_index)))
         break
     else
         continue
@@ -144,31 +127,30 @@ psi_tractor = odometry(1:terminal_index, 1);
 psi_trailer = odometry(1:terminal_index, 3);
     
 %% Plots
+figure
+ax1 = subplot(3, 1, 1);
+plot(tout, rad2deg(psi_tractor_e))
+hold on
+plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
+hold off
+ylabel('\psi_{tractor} [{\circ}]')
+ax2 = subplot(3, 1, 2);
+plot(tout, rad2deg(psi_te))
+hold on
+plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
+hold off
+ylabel('\psi_{te} [{\circ}]')
+ax3 = subplot(3, 1, 3);
+plot(tout, y_te)
+hold on
+plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
+hold off
+ylabel('y_{te} [m]')
 
-% figure
-% ax1 = subplot(3, 1, 1);
-% plot(tout, rad2deg(psi_tractor_e))
-% hold on
-% plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
-% hold off
-% ylabel('\psi_{tractor} [{\circ}]')
-% ax2 = subplot(3, 1, 2);
-% plot(tout, rad2deg(psi_te))
-% hold on
-% plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
-% hold off
-% ylabel('\psi_{te} [{\circ}]')
-% ax3 = subplot(3, 1, 3);
-% plot(tout, y_te)
-% hold on
-% plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
-% hold off
-% ylabel('y_{te} [m]')
-% 
-% xlabel('time [s]')
-% legend('response', 'desired')
-% movegui('west')
-% linkaxes([ax1 ax2, ax3], 'x')
+xlabel('time [s]')
+legend('response', 'desired')
+movegui('west')
+linkaxes([ax1 ax2, ax3], 'x')
 
 figure
 hold on
