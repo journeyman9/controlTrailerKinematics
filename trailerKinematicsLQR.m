@@ -8,7 +8,7 @@ lr = 5.7336; %[m] tractor wheelbase
 lt = 12.192; %[m] trailer wheelbase
 lh = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
 vr = -4.5; %[m/s] keep below 4.5 m/s
-orientation = 'up'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
+orientation = 'right'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
 
 tractorParams = [lr lt lh vr];
 
@@ -67,7 +67,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_cw_circle.txt');
+track_vector = csvread('t_backward_straight.txt');
 s = track_vector(:, 5);
 t = abs(s / vr);
 curv = [t track_vector(:, 3)];
@@ -83,7 +83,7 @@ x_r = [t track_vector(:, 1)];
 sim_time = t(end, 1);
 
 %% Simulink
-y_IC = 0;
+y_IC = 4;
 
 switch orientation
     case 'right'
@@ -111,6 +111,27 @@ psi_tractor_e = error(:, 1);
 psi_te = error(:, 2);
 y_te = error(:, 3);
 
+%% Jack-knife check 
+hitch_angle = odometry(:, 8);
+for terminal_index = 1:length(hitch_angle)
+    if hitch_angle(terminal_index) > deg2rad(60)
+        fprintf('Jackknifed!\n')
+        break
+    elseif hitch_angle(terminal_index) < deg2rad(-60)
+        fprintf('Jackknifed!\n')
+        break
+    else
+        continue
+    end
+end
+
+tractor_x = odometry(1:terminal_index, 7);
+tractor_y = odometry(1:terminal_index, 6);
+trailer_x = odometry(1:terminal_index, 5);
+trailer_y = odometry(1:terminal_index, 4);
+psi_tractor = odometry(1:terminal_index, 1);
+psi_trailer = odometry(1:terminal_index, 3);
+    
 %% Plots
 
 figure
@@ -141,13 +162,13 @@ linkaxes([ax1 ax2, ax3], 'x')
 figure
 hold on
 plot(track_vector(:, 1), track_vector(:, 2), '--r')
-plot(odometry(:, 5), odometry(:, 4), 'b') % trailer
-plot(odometry(:, 7), odometry(:, 6), 'g') % tractor
+plot(trailer_x, trailer_y, 'b') % trailer
+plot(tractor_x, tractor_y, 'g') % tractor
 
-plot(odometry(1, 5), odometry(1, 4), 'ob')
-plot(odometry(1, 7), odometry(1, 6), 'og')
-plot(odometry(end, 5), odometry(end, 4), 'xb')
-plot(odometry(end, 7), odometry(end, 6), 'xg')
+plot(trailer_x(1), trailer_y(1), 'ob')
+plot(tractor_x(1), tractor_y(1), 'og')
+plot(trailer_x(end), trailer_y(end), 'xb')
+plot(tractor_x(end), tractor_y(end), 'xg')
 axis square
 axis equal
 xlabel('Position in x [m]')
@@ -162,20 +183,13 @@ H_c = lt / 3;
 W_t = lt;
 H_t = lt / 3;
 
-time = 0:.01:sim_time;
-tractor_x = interp1(tout, odometry(:, 7), time);
-tractor_y = interp1(tout, odometry(:, 6), time);
-trailer_x = interp1(tout, odometry(:, 5), time);
-trailer_y = interp1(tout, odometry(:, 4), time);
-psi_tractor = interp1(tout, odometry(:, 1), time);
-psi_trailer = interp1(tout, odometry(:, 3), time);
-
-% tractor_x = odometry(:, 7);
-% tractor_y = odometry(:, 6);
-% trailer_x = odometry(:, 5);
-% trailer_y = odometry(:, 4);
-% psi_tractor = odometry(:, 1);
-% psi_trailer = odometry(:, 3);
+time = 0:.01:tout(terminal_index);
+tractor_x = interp1(tout(1:terminal_index), tractor_x, time);
+tractor_y = interp1(tout(1:terminal_index), tractor_y, time);
+trailer_x = interp1(tout(1:terminal_index), trailer_x, time);
+trailer_y = interp1(tout(1:terminal_index), trailer_y, time);
+psi_tractor = interp1(tout(1:terminal_index), psi_tractor, time);
+psi_trailer = interp1(tout(1:terminal_index), psi_trailer, time);
 
 DCM = @(ang) [cos(ang) -sin(ang) 0;
               sin(ang)  cos(ang) 0;
@@ -193,6 +207,15 @@ for i = 1:length(time)
     ang0 = psi_trailer(i);
     ang1 = psi_tractor(i);
     
+    % trailer ccw pts starting with top right -- rear axle
+    x_trail = [trailer_x(i)+W_t trailer_x(i) trailer_x(i) trailer_x(i)+W_t trailer_x(i)+W_t]; 
+    y_trail = [trailer_y(i)+H_t/2 trailer_y(i)+H_t/2 trailer_y(i)-H_t/2 trailer_y(i)-H_t/2 trailer_y(i)+H_t/2];
+    corners_trail = zeros(5, 3);
+    for j = 1:length(x_trail)
+        corners_trail(j, 1:3) = center(trailer_x(i), trailer_y(i)) * DCM(ang0) * center(-trailer_x(i), -trailer_y(i)) * [x_trail(j); y_trail(j); 1];
+    end
+    plot(corners_trail(:, 1), corners_trail(:, 2), 'b-', 'LineWidth', 2)
+    
     % tractor ccw pts starting with top right -- rear axle
     x_trac = [tractor_x(i)+W_c tractor_x(i) tractor_x(i) tractor_x(i)+W_c tractor_x(i)+W_c]; 
     y_trac = [tractor_y(i)+H_c/2 tractor_y(i)+H_c/2 tractor_y(i)-H_c/2 tractor_y(i)-H_c/2 tractor_y(i)+H_c/2];
@@ -202,17 +225,19 @@ for i = 1:length(time)
     end
     plot(corners_trac(:, 1), corners_trac(:, 2), 'g-', 'LineWidth', 2)
     
-    % trailer ccw pts starting with top right -- rear axle
-    x_trail = [trailer_x(i)+W_t trailer_x(i) trailer_x(i) trailer_x(i)+W_t trailer_x(i)+W_t]; 
-    y_trail = [trailer_y(i)+H_t/2 trailer_y(i)+H_t/2 trailer_y(i)-H_t/2 trailer_y(i)-H_t/2 trailer_y(i)+H_t/2];
-    corners_trail = zeros(5, 3);
-    for j = 1:length(x_trail)
-        corners_trail(j, 1:3) = center(trailer_x(i), trailer_y(i)) * DCM(ang0) * center(-trailer_x(i), -trailer_y(i)) * [x_trail(j); y_trail(j); 1];
-    end
-    plot(corners_trail(:, 1), corners_trail(:, 2), 'b-', 'LineWidth', 2)
+    % rear axle
+    plot(trailer_x(i), trailer_y(i), 'b+')
+    plot(tractor_x(i), tractor_y(i), 'g+')
+    
+    % hitch point (should be the same for both)
+    hitch_trail = center(trailer_x(i), trailer_y(i)) * DCM(ang0) * center(-trailer_x(i), -trailer_y(i)) * [trailer_x(i)+lt; trailer_y(i); 1];
+    plot(hitch_trail(1), hitch_trail(2), 'b*')
+    
+    hitch_trac = center(tractor_x(i), tractor_y(i)) * DCM(ang1) * center(-tractor_x(i), -tractor_y(i)) * [tractor_x(i)-lh; tractor_y(i); 1];
+    plot(hitch_trac(1), hitch_trac(2), 'g*')
 
-    xlim([trailer_x(i)-20 trailer_x(i)+20])
-    ylim([ trailer_y(i)-20 trailer_y(i)+20])
+    xlim([trailer_x(i)-25 trailer_x(i)+25])
+    ylim([ trailer_y(i)-25 trailer_y(i)+25])
     xlabel('Position in x [m]')
     ylabel('Position in y [m]')
     drawnow
