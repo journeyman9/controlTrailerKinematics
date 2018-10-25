@@ -8,7 +8,7 @@ L1 = 5.7336; %[m] tractor wheelbase
 L2 = 12.192; %[m] trailer wheelbase
 h = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
 vc = -4.5; %[m/s] keep below 4.5 m/s
-orientation = 'right'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
+orientation = 'up'; % right for horizontal, up for vertical, left for pi, and down for 3pi/2
 
 %% Linearized State Space
 A = [0       0         0;
@@ -71,7 +71,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Feedforward
-track_vector = csvread('t_backward_straight.txt');
+track_vector = csvread('t_cw_circle.txt');
 s = track_vector(:, 5);
 t = abs(s / vc);
 curv = [t track_vector(:, 3)];
@@ -87,7 +87,7 @@ x_r = [t track_vector(:, 1)];
 sim_time = t(end, 1);
 
 %% Simulink
-y_IC = 4;
+y_IC = 3;
 
 switch orientation
     case 'right'
