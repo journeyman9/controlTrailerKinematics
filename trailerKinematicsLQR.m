@@ -70,7 +70,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Trajectory Generation and Feedforward
-track_vector = csvread('t_dubins_short.txt');
+track_vector = csvread('./dubins_path_longer/dubins_path_longer_0.txt');
 if vc < 0
     track_vector(:, 4) = track_vector(:, 4) - pi;
 end
@@ -80,7 +80,7 @@ y_IC = 0;
 psi_2_IC = deg2rad(0) + track_vector(1, 4);
 hitch_IC = deg2rad(0);
 
-look_ahead = 5; %indices
+look_ahead = 10; %indices
 
 psi_1_IC = hitch_IC + psi_2_IC;
 
@@ -98,7 +98,8 @@ y_te = error(:, 3);
 if goal(end) == 1
     fprintf('GOAL with d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
 else
-    fprintf('TIMES UP: d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
+    [minimum, best_index] = min(d_goal);
+    fprintf('TIMES UP. Closest: d = %4.2f m and psi = %4.2f degrees\n', minimum, rad2deg(psi_goal(best_index)))
 end
 
 %% Jack-knife check 
