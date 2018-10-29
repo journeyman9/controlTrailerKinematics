@@ -80,6 +80,8 @@ y_IC = 0;
 psi_2_IC = deg2rad(0) + track_vector(1, 4);
 hitch_IC = deg2rad(0);
 
+look_ahead = 5; %indices
+
 psi_1_IC = hitch_IC + psi_2_IC;
 
 trailerIC = [track_vector(1, 1)-y_IC*sin(psi_2_IC), track_vector(1, 2)+y_IC*cos(psi_2_IC)]; %x2, y2
@@ -88,13 +90,15 @@ ICs = [psi_1_IC; psi_2_IC; y_IC];
 
 sim('LQRTrailerKinematics.slx')
 
-% x = [yaw_tractor, yaw_trailer, y_r]
+% x = yaw_tractor, yaw_trailer, y_r
 psi_tractor_e = error(:, 1);
 psi_te = error(:, 2);
 y_te = error(:, 3);
 
 if goal(end) == 1
-    fprintf('Goal with d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
+    fprintf('GOAL with d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
+else
+    fprintf('MISSED GOAL because d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
 end
 
 %% Jack-knife check 
