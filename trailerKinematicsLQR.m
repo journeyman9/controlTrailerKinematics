@@ -70,7 +70,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Trajectory Generation and Feedforward
-track_vector = csvread('t_dubins_trailer.txt');
+track_vector = csvread('t_dubins_short.txt');
 if vc < 0
     track_vector(:, 4) = track_vector(:, 4) - pi;
 end
@@ -98,7 +98,7 @@ y_te = error(:, 3);
 if goal(end) == 1
     fprintf('GOAL with d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
 else
-    fprintf('MISSED GOAL because d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
+    fprintf('TIMES UP: d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
 end
 
 %% Jack-knife check 
