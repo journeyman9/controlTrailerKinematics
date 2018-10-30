@@ -92,15 +92,8 @@ sim('LQRTrailerKinematics.slx')
 
 % x = yaw_tractor, yaw_trailer, y_r
 psi_tractor_e = error(:, 1);
-psi_te = error(:, 2);
-y_te = error(:, 3);
-
-if goal(end) == 1
-    fprintf('GOAL with d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
-else
-    [minimum, best_index] = min(d_goal);
-    fprintf('TIMES UP. Closest: d = %4.2f m and psi = %4.2f degrees\n', minimum, rad2deg(psi_goal(best_index)))
-end
+psi_2_e = error(:, 2);
+y_2_e = error(:, 3);
 
 %% Jack-knife check 
 hitch_angle = odometry(:, 8);
@@ -118,6 +111,14 @@ for terminal_index = 1:length(hitch_angle)
     end
 end
 
+%% Goal check
+if goal(end) == 1
+    fprintf('GOAL with d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
+else
+    [minimum, best_index] = min(d_goal(1:terminal_index));
+    fprintf('TIMES UP. Closest: d = %4.2f m and psi = %4.2f degrees\n', minimum, rad2deg(psi_goal(best_index)))
+end
+
 tractor_x = odometry(1:terminal_index, 7);
 tractor_y = odometry(1:terminal_index, 6);
 trailer_x = odometry(1:terminal_index, 5);
@@ -131,18 +132,21 @@ ax1 = subplot(3, 1, 1);
 plot(tout, rad2deg(psi_tractor_e))
 hold on
 plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
+line([tout(terminal_index) tout(terminal_index)], [max(rad2deg(psi_tractor_e)) min(rad2deg(psi_tractor_e))],'Color','red')
 hold off
 ylabel('\psi_{tractor} [{\circ}]')
 ax2 = subplot(3, 1, 2);
-plot(tout, rad2deg(psi_te))
+plot(tout, rad2deg(psi_2_e))
 hold on
 plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
+line([tout(terminal_index) tout(terminal_index)], [max(rad2deg(psi_2_e)) min(rad2deg(psi_2_e))],'Color','red')
 hold off
 ylabel('\psi_{te} [{\circ}]')
 ax3 = subplot(3, 1, 3);
-plot(tout, y_te)
+plot(tout, y_2_e)
 hold on
 plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
+line([tout(terminal_index) tout(terminal_index)], [max(y_2_e) min(y_2_e)],'Color','red')
 hold off
 ylabel('y_{te} [m]')
 
