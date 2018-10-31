@@ -70,7 +70,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Trajectory Generation and Feedforward
-track_vector = csvread('./dubins_path_longer/dubins_path_longer_0.txt');
+track_vector = csvread('t_dubins_manual.txt');
 if vc < 0
     track_vector(:, 4) = track_vector(:, 4) - pi;
 end
@@ -80,7 +80,7 @@ y_IC = 0;
 psi_2_IC = deg2rad(0) + track_vector(1, 4);
 hitch_IC = deg2rad(0);
 
-look_ahead = 10; %indices
+look_ahead = 5; %indices
 
 psi_1_IC = hitch_IC + psi_2_IC;
 
@@ -134,21 +134,21 @@ hold on
 plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
 line([tout(terminal_index) tout(terminal_index)], [max(rad2deg(psi_tractor_e)) min(rad2deg(psi_tractor_e))],'Color','red')
 hold off
-ylabel('\psi_{tractor} [{\circ}]')
+ylabel('\psi_{1_e} [{\circ}]')
 ax2 = subplot(3, 1, 2);
 plot(tout, rad2deg(psi_2_e))
 hold on
 plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
 line([tout(terminal_index) tout(terminal_index)], [max(rad2deg(psi_2_e)) min(rad2deg(psi_2_e))],'Color','red')
 hold off
-ylabel('\psi_{te} [{\circ}]')
+ylabel('\psi_{2_e} [{\circ}]')
 ax3 = subplot(3, 1, 3);
 plot(tout, y_2_e)
 hold on
 plot(tout, 0*linspace(0, length(tout), length(tout))', '--r')
 line([tout(terminal_index) tout(terminal_index)], [max(y_2_e) min(y_2_e)],'Color','red')
 hold off
-ylabel('y_{te} [m]')
+ylabel('y_{2_e} [m]')
 
 xlabel('time [s]')
 legend('response', 'desired')
