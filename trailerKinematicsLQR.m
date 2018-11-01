@@ -7,7 +7,7 @@ clear; close all; clc;
 L1 = 5.7336; %[m] tractor wheelbase
 L2 = 12.192; %[m] trailer wheelbase
 h = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
-vc = -4.5; %[m/s] keep below 4.5 m/s
+vc = 4.5; %[m/s] keep below 4.5 m/s
 
 %% Linearized State Space
 A = [0       0         0;
@@ -70,7 +70,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Trajectory Generation and Feedforward
-track_vector = csvread('t_dubins_manual.txt');
+track_vector = csvread('t_oval.txt');
 if vc < 0
     track_vector(:, 4) = track_vector(:, 4) - pi;
 end
