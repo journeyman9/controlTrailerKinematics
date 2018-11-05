@@ -7,14 +7,14 @@ clear; close all; clc;
 L1 = 5.7336; %[m] tractor wheelbase
 L2 = 12.192; %[m] trailer wheelbase
 h = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
-vc = 4.5; %[m/s] keep below 4.5 m/s
+vc = -4.5; %[m/s] keep below 4.5 m/s
 
 %% Linearized State Space
 A = [0       0         0;
      vc./L2  -vc./L2   0;
      0       vc        0];
 
-B = [vc./L2;
+B = [vc./L1;
      -h*vc ./ (L1*L2);
      0];
 
@@ -70,7 +70,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Trajectory Generation and Feedforward
-track_vector = csvread('t_oval.txt');
+track_vector = csvread('t_dubins_manual.txt');
 if vc < 0
     track_vector(:, 4) = track_vector(:, 4) - pi;
 end
@@ -80,7 +80,7 @@ y_IC = 0;
 psi_2_IC = deg2rad(0) + track_vector(1, 4);
 hitch_IC = deg2rad(0);
 
-look_ahead = 5; %indices
+look_ahead = 0; %indices
 
 psi_1_IC = hitch_IC + psi_2_IC;
 
@@ -115,7 +115,7 @@ end
 if goal(end) == 1
     fprintf('GOAL with d = %4.2f m and psi = %4.2f degrees\n', d_goal(end), rad2deg(psi_goal(end)))
 else
-    [minimum, best_index] = min(d_goal(1:terminal_index));
+    [minimum, best_index] = min(d_goal(1500:terminal_index));
     fprintf('TIMES UP. Closest: d = %4.2f m and psi = %4.2f degrees\n', minimum, rad2deg(psi_goal(best_index)))
 end
 
