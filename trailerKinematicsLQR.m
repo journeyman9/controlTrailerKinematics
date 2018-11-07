@@ -72,8 +72,10 @@ Bbar = B;
 %% Trajectory Generation and Feedforward
 track_vector = csvread('t_dubins_manual.txt');
 if vc < 0
-    track_vector(:, 4) = track_vector(:, 4) - pi;
+    track_vector(:, 4) = track_vector(:, 4) + pi;
 end
+
+hitch_max = 90; %[degrees]
 
 %% Simulink
 y_IC = 0;
@@ -97,7 +99,6 @@ y_2_e = error(:, 3);
 
 %% Jack-knife check 
 hitch_angle = odometry(:, 8);
-hitch_max = 90; %[degrees]
 
 for terminal_index = 1:length(hitch_angle)
     if hitch_angle(terminal_index) > deg2rad(hitch_max)
