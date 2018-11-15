@@ -78,9 +78,9 @@ end
 hitch_max = 90; %[degrees]
 
 %% Simulink
-y_IC = 5;
+y_IC = 0;
 psi_2_IC = deg2rad(0) + track_vector(1, 4);
-hitch_IC = deg2rad(15);
+hitch_IC = deg2rad(0);
 
 look_ahead = 0; %indices
 
