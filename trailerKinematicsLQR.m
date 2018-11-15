@@ -7,7 +7,7 @@ clear; close all; clc;
 L1 = 5.7336; %[m] tractor wheelbase
 L2 = 12.192; %[m] trailer wheelbase
 h = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
-vc = -4.5; %[m/s] keep below 4.5 m/s
+vc = 4.5; %[m/s] keep below 4.5 m/s
 
 %% Linearized State Space
 A = [0       0         0;
@@ -70,7 +70,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Trajectory Generation and Feedforward
-track_vector = csvread('t_dubins_manual.txt');
+track_vector = csvread('t_horizontal.txt');
 if vc < 0
     track_vector(:, 4) = track_vector(:, 4) + pi;
 end
@@ -78,15 +78,15 @@ end
 hitch_max = 90; %[degrees]
 
 %% Simulink
-y_IC = 0;
+y_IC = 5;
 psi_2_IC = deg2rad(0) + track_vector(1, 4);
-hitch_IC = deg2rad(0);
+hitch_IC = deg2rad(15);
 
 look_ahead = 0; %indices
 
 psi_1_IC = hitch_IC + psi_2_IC;
 
-trailerIC = [track_vector(1, 1)-y_IC*sin(psi_2_IC), track_vector(1, 2)+y_IC*cos(psi_2_IC)]; %x2, y2
+trailerIC = [track_vector(1, 1)-y_IC*sin(track_vector(1, 4)), track_vector(1, 2)+y_IC*cos(track_vector(1, 4))]; %x2, y2
 tractorIC = [trailerIC(1)+L2*cos(psi_2_IC)+h*cos(psi_1_IC), trailerIC(2)+L2*sin(psi_2_IC)+h*sin(psi_1_IC)]; %x1, y1
 ICs = [psi_1_IC; psi_2_IC; y_IC];
 
