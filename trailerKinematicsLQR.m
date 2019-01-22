@@ -4,18 +4,18 @@
 clear; close all; clc;
 
 %% Parameters
-L1 = 5.7336; %[m] tractor wheelbase
-L2 = 12.192; %[m] trailer wheelbase
-h = -0.2286; %[m] hitch wheelbase (e1 from Luijten)
-vc = 4.5; %[m/s] keep below 4.5 m/s
+L1 = 5.74; %[m] tractor wheelbase
+L2 = 10.192; %[m] trailer wheelbase
+h = -0.29; %[m] hitch wheelbase (e1 from Luijten)
+v1x = -2.012; %[m/s] keep below 4.5 m/s
 
 %% Linearized State Space
 A = [0       0         0;
-     vc./L2  -vc./L2   0;
-     0       vc        0];
+     v1x./L2  -v1x./L2   0;
+     0       v1x        0];
 
-B = [vc./L1;
-     -h*vc ./ (L1*L2);
+B = [v1x./L1;
+     -h*v1x ./ (L1*L2);
      0];
 
 C = eye(3);
@@ -42,12 +42,12 @@ steer_max = 45; %[degrees]
 G = eye(3);
 H = zeros(3, 1);
 rho = 1;
-R = 1;
-Q = eye(3);
-% R = 1 / (deg2rad(steer_max).^2);
-% Q = [1/(deg2rad(5).^2)       0                       0;
-%      0                   1/(deg2rad(5).^2)           0;
-%      0                        0                1/(1.^2)];
+% R = 1;
+% Q = eye(3);
+R = 1 / (deg2rad(steer_max).^2);
+Q = [1/(deg2rad(2).^2)       0                       0;
+     0                   1/(deg2rad(2).^2)           0;
+     0                        0                1/(0.1.^2)];
 
 QQ = G'*Q*G;
 RR = H'*Q*H + rho*R;
@@ -70,8 +70,8 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Trajectory Generation and Feedforward
-track_vector = csvread('t_horizontal.txt');
-if vc < 0
+track_vector = csvread('t_lanechange.txt');
+if v1x < 0
     track_vector(:, 4) = track_vector(:, 4) + pi;
 end
 
