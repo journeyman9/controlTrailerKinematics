@@ -70,7 +70,7 @@ Bbar = B;
 % N = M(end-m+1:end, end-l+1:end);
 
 %% Trajectory Generation and Feedforward
-track_vector = csvread('t_lanechange.txt');
+track_vector = csvread('t_dubins_manual.txt');
 if v1x < 0
     track_vector(:, 4) = track_vector(:, 4) + pi;
 end
@@ -178,14 +178,6 @@ hold off
 H_c = L2 / 3;
 H_t = L2 / 3;
 
-time = 0:.01:tout(terminal_index);
-tractor_x = interp1(tout(1:terminal_index), tractor_x, time);
-tractor_y = interp1(tout(1:terminal_index), tractor_y, time);
-trailer_x = interp1(tout(1:terminal_index), trailer_x, time);
-trailer_y = interp1(tout(1:terminal_index), trailer_y, time);
-psi_tractor = interp1(tout(1:terminal_index), psi_tractor, time);
-psi_trailer = interp1(tout(1:terminal_index), psi_trailer, time);
-
 DCM = @(ang) [cos(ang) -sin(ang) 0;
               sin(ang)  cos(ang) 0;
                 0         0      1];
@@ -195,7 +187,7 @@ center = @(x, y) [1 0 x;
                   0 1 y;
                   0 0 1];
 figure
-for i = 1:length(time)
+for i = 1:length(tout(1:terminal_index))
     plot(track_vector(:, 1), track_vector(:, 2), '--r')
     hold on
     
