@@ -50,7 +50,7 @@ for i = 0:1
         i K L1 L2 NN num observability Q QN QQ R rho RN RR S steer_max ... 
         sys v1x rms_psi_1_log rms_psi_2_log rms_y2_log max_psi_1_log ...
         max_psi_2_log max_y2_log goal_log 
-    track_vector = csvread('t_lanechange.txt');
+    track_vector = csvread('./other_tracks/t_lanechange.txt');
 ```
 
 ## path array headers
